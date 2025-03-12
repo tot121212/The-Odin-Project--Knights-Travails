@@ -72,15 +72,16 @@ export class KnightsTravails{
         const [sPx, sPy] = startPos;
         const [ePx, ePy] = startPos;
         const startSquare = this.board[sPx][sPy];
+        console.log("startSquare:",startSquare);
         const endSquare = this.board[ePx][ePy];
+        console.log("endSquare:",endSquare);
 
         // queue for storing the current paths
         const paths = [[startSquare]]; // no delimiter needed
         while (paths.length < 100) { // iterate while there are less than 100 paths in queue
             const curPath = paths.shift(); // get a path from queue
-            console.log(curPath);
             if (!curPath.length) return new Error("curPath was empty");
-            for (const square of Object.keys(curPath[curPath.length-1].adjacencies)){
+            for (const square of curPath[curPath.length-1].adjacencies){
                 const path = curPath.slice(); // make new path with slice of cur path and then push the square to it
                 path.push(square);
                 if (square === endSquare) return path; // if the square is the square we are looking for, return the new path we just made
