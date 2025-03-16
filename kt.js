@@ -1,5 +1,6 @@
 class Square{
-    constructor(){
+    constructor(coords){
+        this.coords = coords;
         this.adjacencies = new Map();
     }
 }
@@ -10,17 +11,23 @@ export class KnightsTravails{
         this.board = [];
         this.newBoard(this.boardSize);
     }
+    printBoard(){
+        console.log("\nBoard:");
+        console.table(this.board);
+        console.log("\n");
+    }
+
     newBoard(size){
         
         for (let i = 0; i < this.boardSize; i++){
             let row = [];
             for (let j = 0; j < this.boardSize; j++){
-                row.push(new Square());
+                row.push(new Square([i, j]));
             }
             this.board.push(row);
         }
         this.initAdjacencies();
-        console.log("New Board:", this.board);
+        this.printBoard();
     }
 
     
@@ -44,20 +51,20 @@ export class KnightsTravails{
         for (let i = minIdx; i < maxIdx; i++){
             for (let j = minIdx; j < maxIdx; j++){
                 const square = this.board[i][j];
-                if (!(square instanceof Square)) {
+                if (!(square instanceof Square)) { // first check if square is Square object
                     console.log(square, "is not instanceof Square");
                     continue;
                 };
                 for (let [dx, dy] of possibleMoves){
-                    const pSx = i+dx;
-                    const pSy = j+dy;
-                    if (!(pSx >= 0 && pSx <= this.board.length-1 && pSy >= 0 && pSx <= this.board[pSx].length-1)) continue;
-                    const possibleSquare = this.board[pSx][pSy];
-                    if (!(possibleSquare instanceof Square)) continue;
-                    if (possibleSquare.adjacencies.square instanceof Array) continue; // if possibleSquare adjacencies already contains the square, it will already be in square as well
-                    square.adjacencies.possibleSquare = [pSx][pSy];
-                    possibleSquare.adjacencies.square = [i][j];
-                    console.log("Square ", i, j, "is adjacent to Square ", pSx, pSy);
+                    const pSx = i+dx; // get possible x pos
+                    const pSy = j+dy; // get possible y pos
+                    if (!(pSx >= 0 && pSx <= this.board.length-1 && pSy >= 0 && pSx <= this.board[pSx].length-1)) continue; // if possible position is not within bounds, continue
+                    const possibleSquare = this.board[pSx][pSy]; // get possible pos
+                    if (!(possibleSquare instanceof Square)) continue; // if possible pos value isnt a square, continue;
+                    if (possibleSquare.adjacencies.get(square)) continue; // if possibleSquare already adjacent to the square, it will already be in square as well, so just continue
+                    square.adjacencies.set(possibleSquare, [pSx, pSy]); // set possibleSquare key to possibleSquare coords
+                    possibleSquare.adjacencies.set(square, [i, j]); // set square key to square coords
+                    console.log("Square", square.adjacencies.get(possibleSquare), "is adjacent to Square", possibleSquare.adjacencies.get(square), "for Knight");
                     // AWESOMEEEE
                 }
             }
@@ -70,7 +77,7 @@ export class KnightsTravails{
         if (startPos.some(num => typeof num !== "number") || endPos.some(num => typeof num !== "number")) return null; // verify each element is a number
         // search from startPos node inside adjacencies, adding to queue until we find the node we want to be at
         const [sPx, sPy] = startPos;
-        const [ePx, ePy] = startPos;
+        const [ePx, ePy] = endPos;
         const startSquare = this.board[sPx][sPy];
         console.log("startSquare:",startSquare);
         const endSquare = this.board[ePx][ePy];
@@ -78,16 +85,25 @@ export class KnightsTravails{
 
         // queue for storing the current paths
         const paths = [[startSquare]]; // no delimiter needed
-        while (paths.length < 100) { // iterate while there are less than 100 paths in queue
+        const visitedSquares = new Set();
+        while (paths) { // iterate while there are less than 100 paths in queue
             const curPath = paths.shift(); // get a path from queue
+            if (!curPath) break; // if path doesnt exists, we are at end of queue, break
             if (!curPath.length) return new Error("curPath was empty");
-            for (const square of curPath[curPath.length-1].adjacencies){
-                const path = curPath.slice(); // make new path with slice of cur path and then push the square to it
-                path.push(square);
-                if (square === endSquare) return path; // if the square is the square we are looking for, return the new path we just made
-                paths.push(path); // else we add to the end of the queue and start the next iteration
+            const filteredForRepeatAdjacencies = curPath[curPath.length-1].adjacencies.keys().filter( // get last element of path, get its adjacencies as keys, filter out any repeat squares
+                (ele, idx)=>{
+                    return !visitedSquares.has(ele) ? true : false;
+                }
+            );
+            for (const square of filteredForRepeatAdjacencies){ // iterate filtered squares and add new paths for each
+                const newPath = curPath.slice(); // make new path with slice of cur path
+                newPath.push(square); // then push the square to it
+                if (square === endSquare) {
+                    console.log("Amt of paths it took to find newPath:", paths.length);
+                    return newPath.map((square)=>{return square.coords});
+                } // if the square is the square we are looking for, return the new path we just made
+                paths.push(newPath); // else we add to the end of the queue and start the next iteration
             }
-            console.log("Paths:",paths);
         }
     }
 }

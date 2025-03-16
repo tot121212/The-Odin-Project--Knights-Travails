@@ -1,4 +1,14 @@
 import {KnightsTravails} from "./kt.js";
 
-const Game = new KnightsTravails(7);
-console.log(Game.knightMoves([3,3],[4,3]));
+const Game = new KnightsTravails(8);
+
+const printInput = (inp)=>{
+    console.log(`\nIdeal Path to ${inp[1]} from ${inp[0]}:`,Game.knightMoves(inp[0], inp[1]));
+}
+
+let inp = [[0,0],[3,3]];
+printInput(inp);
+inp = [[3,3],[0,0]];
+printInput(inp);
+inp = [[0,0],[7,7]];
+printInput(inp);
